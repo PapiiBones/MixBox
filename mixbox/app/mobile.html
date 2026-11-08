@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mixbox">
+<meta name="theme-color" content="#0c0c0f">
+<title>Mixbox</title>
+<style>
+:root{--bg:#0c0c0f;--p:#16161b;--p2:#202027;--p3:#2a2a33;--bd:#2d2d37;--tx:#e4e4ec;--mut:#8b8b9a;--a:#2f8cff;--ok:#2bd665;--bad:#ff4757;--warn:#ffb020;--st:env(safe-area-inset-top);--sb:env(safe-area-inset-bottom)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:15px/1.35 -apple-system,system-ui,Roboto,sans-serif;overscroll-behavior:none}
+button,input,select,textarea{font:inherit;color:var(--tx)}
+button{background:var(--p2);border:1px solid var(--bd);border-radius:10px;padding:9px 13px}
+button.pri{background:var(--a);border-color:var(--a);color:#fff;font-weight:600}
+button.ghost{background:none;border:none;padding:6px 8px}
+input,select,textarea{background:var(--p2);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;width:100%}
+#app{display:flex;flex-direction:column;height:100%}
+header{padding:calc(var(--st) + 10px) 14px 8px;background:#08080b;border-bottom:1px solid var(--bd)}
+.hrow{display:flex;align-items:center;gap:8px}
+h1{font-size:22px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--mut);display:inline-block}
+.dot.on{background:var(--ok)}.dot.off{background:var(--bad)}
+.tools{display:flex;gap:6px;margin-top:8px}
+.tools input{flex:1}
+.chips{display:flex;gap:6px;overflow-x:auto;margin-top:8px;padding-bottom:2px;scrollbar-width:none}
+.chip{flex:none;padding:5px 11px;border-radius:16px;background:var(--p2);border:1px solid var(--bd);font-size:13px;white-space:nowrap}
+.chip.on{background:var(--a);border-color:var(--a);color:#fff}
+main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #1b1b22;min-height:58px;position:relative;background:var(--bg)}
+.row:active{background:#15151c}
+.row.sel{background:#16304f}
+.cbar{width:4px;align-self:stretch;border-radius:2px;flex:none}
+.meta{flex:1;min-width:0}.t1{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.t2{color:var(--mut);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nums{text-align:right;font-size:13px;font-variant-numeric:tabular-nums;flex:none}.nums b{display:block;font-size:14px}
+.stars{color:#ffd32a;font-size:11px;letter-spacing:1px}
+.handle{font-size:20px;color:var(--mut);padding:8px 4px 8px 10px;touch-action:none;flex:none}
+.trans{display:flex;align-items:center;gap:6px;padding:2px 14px 2px 28px;font-size:11px;color:var(--mut);background:#0a0a0d}
+.trans .ok{color:var(--ok)}.trans .warn{color:var(--warn)}.trans .bad{color:var(--bad)}
+.dragging{opacity:.85;background:#1d2a3d!important;z-index:5;box-shadow:0 6px 18px #000a}
+nav{display:flex;border-top:1px solid var(--bd);background:#08080b;padding-bottom:var(--sb)}
+nav button{flex:1;background:none;border:none;border-radius:0;padding:9px 0 7px;color:var(--mut);font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button span{font-size:20px}nav button.on{color:var(--a)}
+#player{display:none;align-items:center;gap:10px;padding:8px 12px;background:var(--p);border-top:1px solid var(--bd)}
+#player.show{display:flex}
+#player .meta{font-size:13px}
+#pprog{position:absolute;left:0;top:0;height:2px;background:var(--a)}
+.empty{padding:40px 24px;text-align:center;color:var(--mut);line-height:1.6}
+.sheetbg{position:fixed;inset:0;background:#000a;z-index:20;display:flex;align-items:flex-end}
+.sheet{background:var(--p);width:100%;max-height:90%;overflow-y:auto;border-radius:16px 16px 0 0;padding:14px 16px calc(16px + var(--sb));animation:up .18s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+.sheet h2{margin:2px 0 4px;font-size:19px}
+.sheet label{display:block;color:var(--mut);font-size:12px;margin:10px 0 4px}
+.grip{width:40px;height:4px;border-radius:2px;background:#444;margin:0 auto 10px}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.btnrow button{flex:1}
+canvas.wave{width:100%;height:84px;display:block;background:#09090c;border-radius:8px;margin-top:10px;touch-action:none}
+.hots{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.hots button{padding:10px 0;font-weight:700}
+.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.sw{width:32px;height:32px;border-radius:50%;border:2px solid transparent}.sw.on{border-color:#fff}
+.bigstars{font-size:30px;letter-spacing:6px;color:#444}.bigstars span.f{color:#ffd32a}
+.plrow{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--bd)}
+.plrow input{width:22px;height:22px}
+.stats{display:flex;gap:14px;color:var(--mut);font-size:12px;margin-top:6px;flex-wrap:wrap}
+.selbar{display:flex;gap:6px;padding:8px 10px;background:var(--a);overflow-x:auto}
+.selbar button{background:#0003;border-color:#fff4;color:#fff;flex:none;padding:7px 11px}
+#toast{position:fixed;left:50%;bottom:calc(90px + var(--sb));transform:translateX(-50%) translateY(30px);opacity:0;background:#2a2a33;padding:10px 16px;border-radius:20px;transition:.2s;z-index:40;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.pair{max-width:360px;margin:auto;padding:40px 24px;text-align:center}
+.pair input{font-size:30px;letter-spacing:10px;text-align:center;margin:18px 0}
+.up{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #1b1b22}
+.bar{height:5px;background:var(--p3);border-radius:3px;overflow:hidden;margin-top:5px}.bar i{display:block;height:100%;background:var(--a);width:0}
+.secth{padding:14px 14px 6px;color:var(--mut);font-size:12px;letter-spacing:1px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast"></div>
+<audio id="au" preload="none"></audio>
+<script>
+'use strict';
+/* Mixbox phone companion — organizes the desktop library live over Wi-Fi. */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const ls = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 2000); }
+const fmt = s => { if (!s) return '—'; s = Math.round(s); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const fmtLong = s => { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? `${h}h ${m}m` : `${m}m`; };
+const COLORS = { '': '#3a3a44', pink: '#ff4fa3', red: '#ff3b3b', orange: '#ff9a1f', yellow: '#ffe14d', green: '#3ddc84', aqua: '#25fde9', blue: '#3d7bff', purple: '#9b59ff' };
+const HOTC = ['#3ddc84','#ff4757','#ff9f1a','#ffd32a','#18dcff','#3d7bff','#c56cf0','#ff6bcb'];
+const keyColor = k => { const n = parseInt(k); return isNaN(n) ? '#888' : `hsl(${((n - 1) * 30 + 120) % 360},80%,62%)`; };
+function keyRel(a, b) { // 0 same/perfect, 1 compatible, 2 clash, null unknown
+  const na = parseInt(a), nb = parseInt(b); if (isNaN(na) || isNaN(nb)) return null;
+  const la = a.slice(-1), lb = b.slice(-1);
+  if (na === nb) return la === lb ? 0 : 1;
+  if (la === lb && (((na - nb + 12) % 12) === 1 || ((nb - na + 12) % 12) === 1)) return 1;
+  return 2;
+}
+function bpmRatio(a, b) { if (!a || !b) return 1; let r = b / a; while (r > 1.45) r /= 2; while (r < 0.7) r *= 2; return r; }
+
+/* ---------------- state + API ---------------- */
+let TOKEN = ls.get('mixbox.token', ''), HOST = ls.get('mixbox.host', '');
+const L = { ver: 0, tracks: new Map(), order: [], playlists: [], history: [], loaded: [] };
+const S = { tab: 'lib', pl: null, q: '', sort: ls.get('mixbox.sort', 'added'), dir: ls.get('mixbox.dir', -1), f: { bmin: '', bmax: '', key: '', genre: '', rating: 0, color: '' }, sel: new Set(), selMode: false, limit: 300, online: false };
+let QUEUE = ls.get('mixbox.queue', []), flushing = false;
+async function api(path, opt = {}) {
+  const r = await fetch(path, { ...opt, headers: { 'Content-Type': 'application/json', 'X-Mixbox-Token': TOKEN, ...(opt.headers || {}) } });
+  if (r.status === 401) { TOKEN = ''; ls.set('mixbox.token', ''); renderPair(); throw new Error('unpaired'); }
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  return r.json();
+}
+async function loadLibrary() {
+  const d = await api('/api/library');
+  L.ver = d.ver; L.tracks = new Map(d.tracks.map(t => [t.id, t])); L.order = d.tracks.map(t => t.id);
+  L.playlists = d.playlists || []; L.history = d.history || []; L.loaded = d.loaded || [];
+  QUEUE.forEach(applyLocal); // keep pending edits visible
+  ls.set('mixbox.cache', d); setOnline(true); render();
+}
+function setOnline(v) { S.online = v; const d = $('netdot'); if (d) d.className = 'dot ' + (v ? 'on' : 'off'); }
+function applyLocal(o) {
+  if (o.op === 'track') { const t = L.tracks.get(o.id); if (t) Object.assign(t, o.set); return; }
+  if (o.op === 'pl.create') { if (!L.playlists.some(p => p.id === o.id)) L.playlists.push({ id: o.id, name: o.name, ids: (o.ids || []).slice() }); return; }
+  const p = L.playlists.find(p => p.id === o.id); if (!p) return;
+  if (o.op === 'pl.rename') p.name = o.name;
+  else if (o.op === 'pl.delete') L.playlists = L.playlists.filter(x => x !== p);
+  else if (o.op === 'pl.set') p.ids = o.ids.slice();
+  else if (o.op === 'pl.add') o.ids.forEach(i => { if (!p.ids.includes(i)) p.ids.push(i); });
+  else if (o.op === 'pl.remove') p.ids = p.ids.filter(i => !o.ids.includes(i));
+}
+function send(...ops) { ops.forEach(applyLocal); QUEUE.push(...ops); ls.set('mixbox.queue', QUEUE); render(); flush(); }
+async function flush() {
+  if (flushing || !QUEUE.length || !TOKEN) return; flushing = true;
+  const batch = QUEUE.slice();
+  try { const r = await api('/api/ops', { method: 'POST', body: JSON.stringify(batch) }); QUEUE = QUEUE.slice(batch.length); ls.set('mixbox.queue', QUEUE); L.ver = r.ver; setOnline(true); }
+  catch (e) { setOnline(false); setTimeout(flush, 3000); }
+  flushing = false; if (QUEUE.length) flush();
+}
+let ES = null, reloadT = 0;
+function listen() {
+  if (ES) ES.close();
+  ES = new EventSource('/api/events?t=' + encodeURIComponent(TOKEN));
+  ES.onopen = () => setOnline(true);
+  ES.onmessage = e => { const { ver } = JSON.parse(e.data); if (ver !== L.ver && !QUEUE.length) { clearTimeout(reloadT); reloadT = setTimeout(() => loadLibrary().catch(() => {}), 300); } };
+  ES.onerror = () => setOnline(false);
+}
+
+/* ---------------- pairing ---------------- */
+function renderPair() {
+  $('app').innerHTML = `<div class="pair"><h1 style="font-size:30px">MIX<span style="color:var(--a)">BOX</span></h1>
+    <p style="color:var(--mut)">On your computer open <b>Mixbox DJ → 📱 Phone</b>, start sync and enter the 6-digit PIN shown there.</p>
+    <input id="pin" inputmode="numeric" maxlength="6" placeholder="••••••" autocomplete="one-time-code">
+    <button class="pri" id="go" style="width:100%">Connect</button></div>`;
+  const go = async () => {
+    try { const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: $('pin').value.trim() }) }); const d = await r.json(); if (!r.ok) throw new Error(d.error); TOKEN = d.token; HOST = d.name; ls.set('mixbox.token', TOKEN); ls.set('mixbox.host', HOST); boot(); }
+    catch (e) { toast(e.message || 'Could not connect'); }
+  };
+  $('go').onclick = go; $('pin').oninput = e => { if (e.target.value.length === 6) go(); };
+}
+
+/* ---------------- filtering / sorting ---------------- */
+function visibleIds(ids) {
+  const q = S.q.trim().toLowerCase(), f = S.f;
+  return ids.filter(id => {
+    const t = L.tracks.get(id); if (!t) return false;
+    if (q && ![t.title, t.artist, t.album, t.genre, t.comment, t.key, t.keyName, t.name].join(' ').toLowerCase().includes(q)) return false;
+    if (f.bmin && (t.bpm || 0) < +f.bmin) return false;
+    if (f.bmax && (t.bpm || 999) > +f.bmax) return false;
+    if (f.key) { const r = keyRel(f.key, t.key || ''); if (r == null || r > 1) return false; }
+    if (f.genre && (t.genre || '').toLowerCase() !== f.genre.toLowerCase()) return false;
+    if (f.rating && (t.rating || 0) < f.rating) return false;
+    if (f.color && t.color !== f.color) return false;
+    return true;
+  });
+}
+function sortIds(ids) {
+  const k = S.sort, d = S.dir;
+  if (k === 'added' && d === 1) return ids;
+  const val = t => k === 'key' ? (parseInt(t.key) * 2 + (String(t.key).endsWith('B') ? 1 : 0) || 99) : t[k];
+  return ids.slice().sort((a, b) => { const x = val(L.tracks.get(a)), y = val(L.tracks.get(b)); return (typeof x === 'string' || typeof y === 'string' ? String(x || '').localeCompare(String(y || '')) : (x || 0) - (y || 0)) * d; });
+}
+const filtersOn = () => Object.values(S.f).some(v => v);
+// Harmonic set builder: greedy path through the Camelot wheel with smallest BPM jumps, trending upward.
+function harmonicOrder(ids) {
+  const rest = ids.map(id => L.tracks.get(id)).filter(Boolean); if (rest.length < 3) return ids;
+  rest.sort((a, b) => (a.bpm || 0) - (b.bpm || 0));
+  const out = [rest.shift()];
+  const cost = (a, b) => { const kr = keyRel(a.key || '', b.key || ''); const kc = kr == null ? 1.5 : kr === 0 ? 0 : kr === 1 ? 0.6 : 4; const r = bpmRatio(a.bpm, b.bpm); return kc * 2 + Math.abs(r - 1) * 60 + (r < 0.995 ? 0.8 : 0); };
+  while (rest.length) { const cur = out[out.length - 1]; let bi = 0, bc = Infinity; rest.forEach((t, i) => { const c = cost(cur, t); if (c < bc) { bc = c; bi = i; } }); out.push(rest.splice(bi, 1)[0]); }
+  return out.map(t => t.id);
+}
+
+/* ---------------- rendering ---------------- */
+function rowHTML(t, opts = {}) {
+  const stars = t.rating ? '★'.repeat(t.rating) : '';
+  const live = L.loaded.includes(t.id) ? ' <span style="color:var(--a)">● on deck</span>' : '';
+  return `<div class="row${S.sel.has(t.id) ? ' sel' : ''}" data-id="${t.id}"${opts.idx != null ? ` data-i="${opts.idx}"` : ''}>
+    <div class="cbar" style="background:${COLORS[t.color || '']}"></div>
+    <div class="meta"><div class="t1">${esc(t.title || t.name)}</div><div class="t2">${esc(t.artist || '—')}${t.genre ? ' · ' + esc(t.genre) : ''}${live}</div><div class="stars">${stars}</div></div>
+    <div class="nums"><b>${t.bpm ? t.bpm.toFixed(1) : '—'}</b><span style="color:${keyColor(t.key)}">${esc(t.key || '')}</span> · ${fmt(t.dur)}</div>
+    ${opts.handle ? '<div class="handle">≡</div>' : ''}</div>`;
+}
+function transHTML(a, b) {
+  const kr = keyRel(a.key || '', b.key || ''), r = bpmRatio(a.bpm, b.bpm), pct = (r - 1) * 100;
+  const kc = kr == null ? '' : kr === 0 ? 'ok' : kr === 1 ? 'ok' : 'bad', bc = Math.abs(pct) <= 3 ? 'ok' : Math.abs(pct) <= 6 ? 'warn' : 'bad';
+  return `<div class="trans"><span class="${kc}">${kr == null ? 'key ?' : kr === 2 ? '✕ key clash' : kr === 0 ? '✓ same key' : '✓ harmonic'}</span><span class="${bc}">${a.bpm && b.bpm ? (pct >= 0 ? '+' : '') + pct.toFixed(1) + '% BPM' : ''}</span></div>`;
+}
+function header(title, sub, extra = '') {
+  return `<header><div class="hrow">${S.pl && S.tab === 'pls' ? '<button class="ghost" id="back" style="font-size:22px">‹</button>' : ''}<h1>${esc(title)}</h1><span class="dot ${S.online ? 'on' : 'off'}" id="netdot" title="sync"></span>${extra}</div>${sub || ''}</header>`;
+}
+function searchTools() {
+  const sorts = [['added', 'Recent'], ['title', 'Title'], ['artist', 'Artist'], ['bpm', 'BPM'], ['key', 'Key'], ['rating', 'Rating'], ['plays', 'Plays']];
+  return `<div class="tools"><input type="search" id="q" placeholder="Search" value="${esc(S.q)}"><button id="filt"${filtersOn() ? ' class="pri"' : ''}>Filter</button></div>
+   <div class="chips">${sorts.map(([k, l]) => `<span class="chip${S.sort === k ? ' on' : ''}" data-sort="${k}">${l}${S.sort === k ? (S.dir > 0 ? ' ↑' : ' ↓') : ''}</span>`).join('')}</div>`;
+}
+function selBar() {
+  return S.selMode ? `<div class="selbar"><button id="sDone">✕ ${S.sel.size}</button><button id="sAll">All</button><button id="sPl">＋ Playlist</button><button id="sNew">New playlist</button><button id="sRate">★ Rate</button><button id="sColor">● Color</button>${S.tab === 'pls' && S.pl ? '<button id="sRem">Remove</button>' : ''}</div>` : '';
+}
+function render() {
+  if (!TOKEN) return renderPair();
+  const sc = document.querySelector('main') ? document.querySelector('main').scrollTop : 0;
+  let html = '', ids = [];
+  if (S.tab === 'lib') {
+    ids = sortIds(visibleIds(L.order));
+    html = header('Collection', searchTools() + selBar(), `<span style="color:var(--mut);font-size:13px">${ids.length}</span>`) +
+      `<main id="list">${ids.slice(0, S.limit).map(id => rowHTML(L.tracks.get(id))).join('')}${ids.length > S.limit ? '<div class="empty"><button id="more">Show more</button></div>' : ''}
+      ${!L.order.length ? '<div class="empty">Your desktop collection is empty. Add tracks on the computer or from the Upload tab.</div>' : !ids.length ? '<div class="empty">No tracks match.</div>' : ''}
+      ${filtersOn() || S.q ? `<div class="empty"><button id="saveFilt">Save these ${ids.length} as a playlist</button></div>` : ''}</main>`;
+  } else if (S.tab === 'pls' && S.pl) {
+    const p = L.playlists.find(x => x.id === S.pl); if (!p) { S.pl = null; return render(); }
+    const tr = p.ids.map(id => L.tracks.get(id)).filter(Boolean), dur = tr.reduce((a, t) => a + (t.dur || 0), 0), bpms = tr.map(t => t.bpm).filter(Boolean);
+    const clashes = tr.slice(1).filter((t, i) => keyRel(tr[i].key || '', t.key || '') === 2).length;
+    html = header(p.name, `<div class="stats"><span>${tr.length} tracks</span><span>${fmtLong(dur)}</span>${bpms.length ? `<span>${Math.min(...bpms).toFixed(0)}–${Math.max(...bpms).toFixed(0)} BPM</span>` : ''}<span style="color:${clashes ? 'var(--bad)' : 'var(--ok)'}">${clashes ? clashes + ' key clash' + (clashes > 1 ? 'es' : '') : 'all transitions harmonic'}</span></div>
+      <div class="chips"><span class="chip" id="plHarm">✨ Harmonic order</span><span class="chip" id="plBpm">Sort by BPM</span><span class="chip" id="plKey">Sort by key</span><span class="chip" id="plRev">Reverse</span><span class="chip" id="plAdd">＋ Add tracks</span><span class="chip" id="plMenu">⋯</span></div>` + selBar(), '') +
+      `<main id="list">${tr.map((t, i) => (i ? transHTML(tr[i - 1], t) : '') + rowHTML(t, { handle: true, idx: i })).join('') || '<div class="empty">Empty playlist. Tap ＋ Add tracks, or long-press tracks in Collection.</div>'}</main>`;
+  } else if (S.tab === 'pls') {
+    html = header('Playlists', '', '<button class="ghost" id="newPl" style="font-size:24px">＋</button>') + `<main>
+      <div class="row" data-hist="1"><div class="cbar" style="background:#555"></div><div class="meta"><div class="t1">⟲ History</div><div class="t2">${new Set(L.history).size} played on desktop</div></div></div>
+      ${L.playlists.map(p => { const tr = p.ids.map(id => L.tracks.get(id)).filter(Boolean); return `<div class="row" data-pl="${p.id}"><div class="cbar" style="background:var(--a)"></div><div class="meta"><div class="t1">${esc(p.name)}</div><div class="t2">${tr.length} tracks · ${fmtLong(tr.reduce((a, t) => a + (t.dur || 0), 0))}</div></div><span style="color:var(--mut)">›</span></div>`; }).join('')}
+      ${!L.playlists.length ? '<div class="empty">No playlists yet. Tap ＋ to create one.</div>' : ''}</main>`;
+  } else if (S.tab === 'up') {
+    html = header('Upload to desktop') + `<main><div style="padding:16px">
+      <p style="color:var(--mut)">Send audio files from this phone into your desktop collection. They're copied to <b>Music/Mixbox Uploads</b> on the computer and analyzed for BPM, key and waveform.</p>
+      <label style="color:var(--mut);font-size:12px">Also add to playlist</label><select id="upPl"><option value="">— none —</option>${L.playlists.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
+      <div class="btnrow"><button class="pri" id="upPick">Choose audio files</button></div><input type="file" id="upIn" accept="audio/*" multiple hidden></div>
+      <div id="upList">${UP.map(upHTML).join('')}</div>
+      <div class="secth">CONNECTION</div><div style="padding:0 16px 20px;color:var(--mut)">Paired with <b>${esc(HOST || 'desktop')}</b>. ${QUEUE.length ? QUEUE.length + ' change(s) waiting to sync.' : 'Everything is in sync.'}<div class="btnrow"><button id="resync">Reload library</button><button id="unpair">Unpair</button></div></div></main>`;
+  }
+  html += playerHTML() + `<nav><button data-tab="lib" class="${S.tab === 'lib' ? 'on' : ''}"><span>♫</span>Collection</button><button data-tab="pls" class="${S.tab === 'pls' ? 'on' : ''}"><span>☰</span>Playlists</button><button data-tab="up" class="${S.tab === 'up' ? 'on' : ''}"><span>⇪</span>Upload</button></nav>`;
+  const focused = document.activeElement && document.activeElement.id === 'q', caret = focused ? document.activeElement.selectionStart : 0;
+  $('app').innerHTML = html;
+  const m = document.querySelector('main'); if (m) m.scrollTop = sc;
+  if (focused && $('q')) { $('q').focus(); try { $('q').setSelectionRange(caret, caret); } catch (e) {} }
+  bind();
+}
+function bind() {
+  document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { S.tab = b.dataset.tab; S.pl = null; exitSel(false); render(); });
+  if ($('back')) $('back').onclick = () => { S.pl = null; exitSel(false); render(); };
+  if ($('q')) $('q').oninput = e => { S.q = e.target.value; S.limit = 300; render(); };
+  document.querySelectorAll('[data-sort]').forEach(c => c.onclick = () => { if (S.sort === c.dataset.sort) S.dir = -S.dir; else { S.sort = c.dataset.sort; S.dir = c.dataset.sort === 'added' || c.dataset.sort === 'rating' || c.dataset.sort === 'plays' ? -1 : 1; } ls.set('mixbox.sort', S.sort); ls.set('mixbox.dir', S.dir); render(); });
+  if ($('filt')) $('filt').onclick = filterSheet;
+  if ($('more')) $('more').onclick = () => { S.limit += 300; render(); };
+  if ($('saveFilt')) $('saveFilt').onclick = async () => { const ids = sortIds(visibleIds(L.order)); const n = await ask('Playlist name', S.q || 'Filtered set'); if (n) { send({ op: 'pl.create', id: uid(), name: n, ids }); toast('Playlist created'); } };
+  if ($('newPl')) $('newPl').onclick = async () => { const n = await ask('New playlist', ''); if (n) send({ op: 'pl.create', id: uid(), name: n, ids: [] }); };
+  document.querySelectorAll('[data-pl]').forEach(r => r.onclick = () => { S.pl = r.dataset.pl; render(); });
+  document.querySelectorAll('[data-hist]').forEach(r => r.onclick = () => { S.tab = 'lib'; S.q = ''; render(); historySheet(); });
+  const p = S.pl && L.playlists.find(x => x.id === S.pl);
+  if (p) {
+    const setIds = ids => send({ op: 'pl.set', id: p.id, ids });
+    $('plHarm').onclick = () => { setIds(harmonicOrder(p.ids)); toast('Ordered for harmonic flow'); };
+    $('plBpm').onclick = () => setIds(p.ids.slice().sort((a, b) => (L.tracks.get(a)?.bpm || 0) - (L.tracks.get(b)?.bpm || 0)));
+    $('plKey').onclick = () => setIds(p.ids.slice().sort((a, b) => { const k = id => { const t = L.tracks.get(id) || {}; return parseInt(t.key) * 2 + (String(t.key).endsWith('B') ? 1 : 0) || 99; }; return k(a) - k(b); }));
+    $('plRev').onclick = () => setIds(p.ids.slice().reverse());
+    $('plAdd').onclick = () => { S.tab = 'lib'; S.addTo = p.id; S.pl = null; S.selMode = true; S.sel.clear(); render(); toast('Tap tracks, then ＋ Playlist'); };
+    $('plMenu').onclick = () => sheet(`<h2>${esc(p.name)}</h2><div class="btnrow" style="flex-direction:column"><button id="pmRen">Rename</button><button id="pmDup">Duplicate</button><button id="pmDel" style="color:var(--bad)">Delete playlist</button></div>`, s => {
+      $('pmRen').onclick = async () => { s.close(); const n = await ask('Rename playlist', p.name); if (n) send({ op: 'pl.rename', id: p.id, name: n }); };
+      $('pmDup').onclick = () => { s.close(); send({ op: 'pl.create', id: uid(), name: p.name + ' copy', ids: p.ids.slice() }); toast('Duplicated'); };
+      $('pmDel').onclick = () => { s.close(); send({ op: 'pl.delete', id: p.id }); S.pl = null; };
+    });
+    enableDrag(p);
+  }
+  // rows: tap = details (or select), long-press = select mode
+  document.querySelectorAll('#list .row[data-id]').forEach(r => {
+    let tm = null, moved = false, sx = 0, sy = 0;
+    r.addEventListener('pointerdown', e => { if (e.target.closest('.handle')) return; moved = false; sx = e.clientX; sy = e.clientY; tm = setTimeout(() => { tm = null; moved = true; S.selMode = true; S.sel.add(r.dataset.id); navigator.vibrate && navigator.vibrate(15); render(); }, 480); });
+    r.addEventListener('pointermove', e => { if (tm && Math.hypot(e.clientX - sx, e.clientY - sy) > 10) { clearTimeout(tm); tm = null; moved = true; } });
+    r.addEventListener('pointerup', e => { if (e.target.closest('.handle')) return; if (tm) { clearTimeout(tm); tm = null; } if (moved) return; const id = r.dataset.id; if (S.selMode) { S.sel.has(id) ? S.sel.delete(id) : S.sel.add(id); if (!S.sel.size && !S.addTo) exitSel(false); render(); } else trackSheet(id); });
+    r.addEventListener('contextmenu', e => e.preventDefault());
+  });
+  if (S.selMode) {
+    const ids = [...S.sel];
+    $('sDone').onclick = () => { exitSel(true); };
+    $('sAll').onclick = () => { const v = S.tab === 'lib' ? sortIds(visibleIds(L.order)) : (L.playlists.find(x => x.id === S.pl) || { ids: [] }).ids; v.forEach(i => S.sel.add(i)); render(); };
+    $('sPl').onclick = () => { if (!ids.length) return toast('Select tracks first'); if (S.addTo) { send({ op: 'pl.add', id: S.addTo, ids }); toast(`Added ${ids.length}`); const back = S.addTo; exitSel(false); S.tab = 'pls'; S.pl = back; render(); return; } pickPlaylist(ids); };
+    $('sNew').onclick = async () => { if (!ids.length) return toast('Select tracks first'); const n = await ask('New playlist', ''); if (n) { send({ op: 'pl.create', id: uid(), name: n, ids }); exitSel(true); toast('Playlist created'); } };
+    $('sRate').onclick = () => sheet(`<h2>Rate ${ids.length} tracks</h2><div class="bigstars" id="bs">${[1, 2, 3, 4, 5].map(i => `<span data-r="${i}">★</span>`).join('')}</div><div class="btnrow"><button data-r="0">Clear rating</button></div>`, s => s.el.querySelectorAll('[data-r]').forEach(x => x.onclick = () => { send(...ids.map(id => ({ op: 'track', id, set: { rating: +x.dataset.r } }))); s.close(); exitSel(true); }));
+    $('sColor').onclick = () => colorSheet(c => { send(...ids.map(id => ({ op: 'track', id, set: { color: c } }))); exitSel(true); });
+    if ($('sRem')) $('sRem').onclick = () => { send({ op: 'pl.remove', id: S.pl, ids }); exitSel(true); };
+  }
+  // upload + misc
+  if ($('upPick')) { $('upPick').onclick = () => $('upIn').click(); $('upIn').onchange = e => { uploadFiles([...e.target.files], $('upPl').value); e.target.value = ''; }; }
+  if ($('resync')) $('resync').onclick = () => loadLibrary().then(() => toast('Library reloaded'), () => toast('Desktop not reachable'));
+  if ($('unpair')) $('unpair').onclick = () => { TOKEN = ''; ls.set('mixbox.token', ''); renderPair(); };
+  bindPlayer();
+}
+function exitSel(re) { S.selMode = false; S.sel.clear(); S.addTo = null; if (re) render(); }
+
+/* ---------------- drag to reorder ---------------- */
+function enableDrag(p) {
+  const list = $('list');
+  list.querySelectorAll('.handle').forEach(h => {
+    h.addEventListener('pointerdown', e => {
+      e.preventDefault(); const row = h.closest('.row'); h.setPointerCapture(e.pointerId);
+      list.querySelectorAll('.trans').forEach(t => t.style.display = 'none');
+      row.classList.add('dragging'); let lastY = e.clientY;
+      const move = ev => {
+        const y = ev.clientY; row.style.transform = `translateY(${y - lastY}px)`;
+        const rect = row.getBoundingClientRect(), mid = rect.top + rect.height / 2;
+        let sib = row.previousElementSibling; while (sib && !sib.dataset.id) sib = sib.previousElementSibling;
+        if (sib && mid < sib.getBoundingClientRect().top + sib.offsetHeight / 2) { list.insertBefore(row, sib); lastY -= sib.offsetHeight; row.style.transform = `translateY(${y - lastY}px)`; }
+        let nx = row.nextElementSibling; while (nx && !nx.dataset.id) nx = nx.nextElementSibling;
+        if (nx && mid > nx.getBoundingClientRect().top + nx.offsetHeight / 2) { list.insertBefore(row, nx.nextSibling); lastY += nx.offsetHeight; row.style.transform = `translateY(${y - lastY}px)`; }
+        const lr = list.getBoundingClientRect(); if (y < lr.top + 40) list.scrollTop -= 8; else if (y > lr.bottom - 40) list.scrollTop += 8;
+      };
+      const up = () => { h.removeEventListener('pointermove', move); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up); const ids = [...list.querySelectorAll('.row[data-id]')].map(r => r.dataset.id); send({ op: 'pl.set', id: p.id, ids }); };
+      h.addEventListener('pointermove', move); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+    });
+  });
+}
+
+/* ---------------- sheets ---------------- */
+function sheet(html, mount) {
+  const bg = document.createElement('div'); bg.className = 'sheetbg';
+  bg.innerHTML = `<div class="sheet"><div class="grip"></div>${html}</div>`;
+  document.body.appendChild(bg);
+  const s = { el: bg, close: () => { bg.remove(); if (s.onclose) s.onclose(); } };
+  bg.addEventListener('click', e => { if (e.target === bg) s.close(); });
+  if (mount) mount(s); return s;
+}
+function ask(title, value) {
+  return new Promise(res => sheet(`<h2>${esc(title)}</h2><input id="askI" value="${esc(value || '')}"><div class="btnrow"><button id="askC">Cancel</button><button class="pri" id="askO">Save</button></div>`, s => {
+    const i = $('askI'); setTimeout(() => i.focus(), 50); let done = false;
+    const fin = v => { if (done) return; done = true; s.close(); res(v); };
+    s.onclose = () => { if (!done) { done = true; res(null); } };
+    $('askO').onclick = () => fin(i.value.trim() || null); $('askC').onclick = () => fin(null);
+    i.onkeydown = e => { if (e.key === 'Enter') fin(i.value.trim() || null); };
+  }));
+}
+function colorSheet(cb) {
+  sheet(`<h2>Color</h2><div class="swatches">${Object.keys(COLORS).map(c => `<div class="sw" data-c="${c}" style="background:${COLORS[c]}">${c ? '' : '<span style="display:block;text-align:center;line-height:28px">✕</span>'}</div>`).join('')}</div>`, s => s.el.querySelectorAll('[data-c]').forEach(x => x.onclick = () => { cb(x.dataset.c); s.close(); }));
+}
+function pickPlaylist(ids) {
+  sheet(`<h2>Add ${ids.length} to…</h2>${L.playlists.map(p => `<div class="plrow" data-p="${p.id}"><span style="flex:1">${esc(p.name)}</span><span style="color:var(--mut)">${p.ids.length}</span></div>`).join('') || '<p style="color:var(--mut)">No playlists yet.</p>'}<div class="btnrow"><button id="ppNew" class="pri">New playlist</button></div>`, s => {
+    s.el.querySelectorAll('[data-p]').forEach(r => r.onclick = () => { send({ op: 'pl.add', id: r.dataset.p, ids }); s.close(); exitSel(true); toast('Added'); });
+    $('ppNew').onclick = async () => { s.close(); const n = await ask('New playlist', ''); if (n) { send({ op: 'pl.create', id: uid(), name: n, ids }); exitSel(true); } };
+  });
+}
+function filterSheet() {
+  const f = S.f, genres = [...new Set([...L.tracks.values()].map(t => t.genre).filter(Boolean))].sort();
+  const keys = []; for (let n = 1; n <= 12; n++) keys.push(n + 'A', n + 'B');
+  sheet(`<h2>Filter</h2>
+    <label>BPM range</label><div style="display:flex;gap:8px"><input id="fbmin" inputmode="decimal" placeholder="min" value="${esc(f.bmin)}"><input id="fbmax" inputmode="decimal" placeholder="max" value="${esc(f.bmax)}"></div>
+    <label>Mixes with key (Camelot)</label><select id="fkey"><option value="">Any key</option>${keys.map(k => `<option${f.key === k ? ' selected' : ''}>${k}</option>`).join('')}</select>
+    <label>Genre</label><select id="fgen"><option value="">Any genre</option>${genres.map(g => `<option${f.genre === g ? ' selected' : ''}>${esc(g)}</option>`).join('')}</select>
+    <label>Minimum rating</label><select id="frat">${[0, 1, 2, 3, 4, 5].map(r => `<option value="${r}"${f.rating === r ? ' selected' : ''}>${r ? '★'.repeat(r) + ' and up' : 'Any'}</option>`).join('')}</select>
+    <label>Color</label><select id="fcol"><option value="">Any</option>${Object.keys(COLORS).filter(Boolean).map(c => `<option${f.color === c ? ' selected' : ''}>${c}</option>`).join('')}</select>
+    <div class="btnrow"><button id="fclr">Clear</button><button class="pri" id="fok">Apply</button></div>`, s => {
+    $('fok').onclick = () => { Object.assign(S.f, { bmin: $('fbmin').value, bmax: $('fbmax').value, key: $('fkey').value, genre: $('fgen').value, rating: +$('frat').value, color: $('fcol').value }); s.close(); render(); };
+    $('fclr').onclick = () => { S.f = { bmin: '', bmax: '', key: '', genre: '', rating: 0, color: '' }; s.close(); render(); };
+  });
+}
+function historySheet() {
+  const ids = [...new Set(L.history.slice().reverse())].filter(id => L.tracks.has(id)).slice(0, 150);
+  sheet(`<h2>History</h2>${ids.map(id => rowHTML(L.tracks.get(id))).join('') || '<p style="color:var(--mut)">Nothing played yet.</p>'}<div class="btnrow"><button class="pri" id="hSave">Save as playlist</button></div>`, s => {
+    s.el.querySelectorAll('.row[data-id]').forEach(r => r.onclick = () => { s.close(); trackSheet(r.dataset.id); });
+    $('hSave').onclick = () => { s.close(); send({ op: 'pl.create', id: uid(), name: 'Set ' + new Date().toLocaleDateString(), ids: ids.slice().reverse() }); toast('Saved'); };
+  });
+}
+
+/* ---------------- track details: preview, cues, tags ---------------- */
+const WAVES = new Map();
+async function getWave(id) { if (WAVES.has(id)) return WAVES.get(id); try { const w = await api('/api/wave/' + encodeURIComponent(id)); WAVES.set(id, w); return w; } catch (e) { return null; } }
+function drawWave(c, t, w) {
+  const d = devicePixelRatio || 1; c.width = c.clientWidth * d; c.height = c.clientHeight * d;
+  const g = c.getContext('2d'), W = c.width, H = c.height, mid = H / 2;
+  g.fillStyle = '#09090c'; g.fillRect(0, 0, W, H);
+  if (w) [['low', '#1d5fe0', 1], ['mid', '#f29a1d', 0.8], ['high', '#f4f4f8', 0.55]].forEach(([k, col, sc]) => { g.fillStyle = col; const a = w[k]; for (let x = 0; x < W; x++) { const v = a[Math.floor(x / W * a.length)] / 255 * mid * 0.95 * sc; if (v > 0.5) g.fillRect(x, mid - v, 1, v * 2); } });
+  const dur = t.dur || 1, X = s => s / dur * W;
+  if (t.cue != null) { g.fillStyle = '#ffa21f'; g.fillRect(X(t.cue), 0, 2 * d, H); }
+  (t.hot || []).forEach((h, i) => { if (h != null) { g.fillStyle = HOTC[i]; g.fillRect(X(h), 0, 2 * d, H); g.fillRect(X(h), 0, 12 * d, 12 * d); g.fillStyle = '#000'; g.font = `bold ${9 * d}px sans-serif`; g.fillText('ABCDEFGH'[i], X(h) + 3 * d, 9 * d); } });
+  const au = $('au'); if (PL.id === t.id && au.duration) { g.fillStyle = 'rgba(0,0,0,.45)'; g.fillRect(0, 0, X(au.currentTime), H); g.fillStyle = '#fff'; g.fillRect(X(au.currentTime), 0, 2 * d, H); }
+}
+function trackSheet(id) {
+  const t = L.tracks.get(id); if (!t) return;
+  const inPl = L.playlists.filter(p => p.ids.includes(id));
+  const s = sheet(`<h2>${esc(t.title || t.name)}</h2><div style="color:var(--mut)">${esc(t.artist || '—')}</div>
+    <div class="stats"><span><b style="color:var(--tx)">${t.bpm ? t.bpm.toFixed(2) : '—'}</b> BPM</span><span style="color:${keyColor(t.key)}"><b>${esc(t.key || '—')}</b> ${esc(t.keyName || '')}</span><span>${fmt(t.dur)}</span><span>${t.plays || 0} plays</span>${t.file ? '' : '<span style="color:var(--warn)">preview unavailable</span>'}</div>
+    <canvas class="wave" id="tw"></canvas>
+    <div class="btnrow"><button class="pri" id="tPlay">${PL.id === id && !$('au').paused ? '❚❚ Pause' : '▶ Preview'}</button><button id="tCue">Set CUE here</button></div>
+    <label>Hot cues — tap to jump, long-press to set at preview position or clear</label>
+    <div class="hots">${'ABCDEFGH'.split('').map((c, i) => `<button data-h="${i}" style="${t.hot && t.hot[i] != null ? `background:${HOTC[i]};color:#000;border-color:${HOTC[i]}` : ''}">${c}</button>`).join('')}</div>
+    <label>Rating</label><div class="bigstars">${[1, 2, 3, 4, 5].map(i => `<span data-r="${i}" class="${(t.rating || 0) >= i ? 'f' : ''}">★</span>`).join('')}</div>
+    <label>Color</label><div class="swatches">${Object.keys(COLORS).map(c => `<div class="sw${(t.color || '') === c ? ' on' : ''}" data-c="${c}" style="background:${COLORS[c]}"></div>`).join('')}</div>
+    <label>Playlists</label>${L.playlists.map(p => `<div class="plrow"><input type="checkbox" data-p="${p.id}" ${p.ids.includes(id) ? 'checked' : ''}><span>${esc(p.name)}</span></div>`).join('') || '<div style="color:var(--mut)">No playlists yet.</div>'}
+    <label>Title</label><input id="eT" value="${esc(t.title)}"><label>Artist</label><input id="eA" value="${esc(t.artist)}">
+    <label>Album</label><input id="eAl" value="${esc(t.album)}"><label>Genre</label><input id="eG" value="${esc(t.genre)}" list="genres"><datalist id="genres">${[...new Set([...L.tracks.values()].map(x => x.genre).filter(Boolean))].map(g => `<option>${esc(g)}</option>`).join('')}</datalist>
+    <label>Comment</label><textarea id="eC" rows="2">${esc(t.comment)}</textarea>
+    <label>BPM (fix half/double)</label><div style="display:flex;gap:8px"><input id="eB" inputmode="decimal" value="${t.bpm || ''}"><button id="eB2">÷2</button><button id="eBx">×2</button></div>
+    <div class="btnrow"><button class="pri" id="eSave">Save tags</button></div>`, s2 => {
+    const c = $('tw'), w = WAVES.get(id); drawWave(c, t, w); getWave(id).then(w2 => drawWave(c, t, w2));
+    s2.timer = setInterval(() => drawWave(c, t, WAVES.get(id)), 200); s2.onclose = () => clearInterval(s2.timer);
+    c.onpointerdown = e => { const r = c.getBoundingClientRect(); const pos = (e.clientX - r.left) / r.width * (t.dur || 0); preview(t, pos); };
+    $('tPlay').onclick = () => { if (PL.id === id && !$('au').paused) $('au').pause(); else preview(t, PL.id === id ? $('au').currentTime : (t.cue || 0)); $('tPlay').textContent = !$('au').paused || PL.id !== id ? '❚❚ Pause' : '▶ Preview'; };
+    $('tCue').onclick = () => { if (PL.id !== id) return toast('Start the preview first'); send({ op: 'track', id, set: { cue: +$('au').currentTime.toFixed(3) } }); toast('CUE set'); drawWave(c, t, WAVES.get(id)); };
+    s2.el.querySelectorAll('[data-h]').forEach(b => {
+      const i = +b.dataset.h; let tm = null, long = false;
+      b.onpointerdown = () => { long = false; tm = setTimeout(() => { long = true; const hot = (t.hot || Array(8).fill(null)).slice(); if (hot[i] != null) hot[i] = null; else if (PL.id === id) hot[i] = +$('au').currentTime.toFixed(3); else return toast('Start the preview first'); send({ op: 'track', id, set: { hot } }); navigator.vibrate && navigator.vibrate(15); s2.close(); trackSheet(id); }, 500); };
+      b.onpointerup = () => { clearTimeout(tm); if (long) return; const h = t.hot && t.hot[i]; if (h != null) preview(t, h); else if (PL.id === id) { const hot = (t.hot || Array(8).fill(null)).slice(); hot[i] = +$('au').currentTime.toFixed(3); send({ op: 'track', id, set: { hot } }); s2.close(); trackSheet(id); } else toast('Preview first, then tap to set'); };
+    });
+    s2.el.querySelectorAll('[data-r]').forEach(x => x.onclick = () => { const r = +x.dataset.r; send({ op: 'track', id, set: { rating: t.rating === r ? 0 : r } }); s2.el.querySelectorAll('[data-r]').forEach(y => y.classList.toggle('f', +y.dataset.r <= (t.rating || 0))); });
+    s2.el.querySelectorAll('[data-c]').forEach(x => x.onclick = () => { send({ op: 'track', id, set: { color: x.dataset.c } }); s2.el.querySelectorAll('[data-c]').forEach(y => y.classList.toggle('on', y === x)); });
+    s2.el.querySelectorAll('[data-p]').forEach(x => x.onchange = () => send({ op: x.checked ? 'pl.add' : 'pl.remove', id: x.dataset.p, ids: [id] }));
+    $('eB2').onclick = () => { $('eB').value = (+$('eB').value / 2).toFixed(2); }; $('eBx').onclick = () => { $('eB').value = (+$('eB').value * 2).toFixed(2); };
+    $('eSave').onclick = () => { const set = { title: $('eT').value, artist: $('eA').value, album: $('eAl').value, genre: $('eG').value, comment: $('eC').value }; const b = parseFloat($('eB').value); if (b > 20 && b < 400) set.bpm = Math.round(b * 100) / 100; send({ op: 'track', id, set }); s2.close(); toast('Saved'); };
+  });
+  return s;
+}
+
+/* ---------------- preview player ---------------- */
+const PL = { id: null };
+function preview(t, at) {
+  if (!t.file) return toast('This track has no file on the desktop');
+  const au = $('au');
+  if (PL.id !== t.id) { PL.id = t.id; au.src = '/api/audio/' + encodeURIComponent(t.id) + '?t=' + encodeURIComponent(TOKEN); }
+  const go = () => { try { au.currentTime = at || 0; } catch (e) {} au.play().catch(() => toast('Tap play again')); };
+  if (au.readyState >= 1) go(); else { au.addEventListener('loadedmetadata', go, { once: true }); au.load(); }
+  renderPlayer();
+}
+function playerHTML() { const t = PL.id && L.tracks.get(PL.id); return `<div id="player" class="${t ? 'show' : ''}" style="position:relative"><div id="pprog"></div>${t ? `<div class="meta" id="pmeta"><div class="t1">${esc(t.title)}</div><div class="t2">${esc(t.artist)} · ${t.bpm ? t.bpm.toFixed(1) : ''} ${esc(t.key || '')}</div></div><button id="pBack">↺ CUE</button><button class="pri" id="pTog">${$('au').paused ? '▶' : '❚❚'}</button><button class="ghost" id="pX">✕</button>` : ''}</div>`; }
+function renderPlayer() { const p = $('player'); if (!p) return; p.outerHTML = playerHTML(); bindPlayer(); }
+function bindPlayer() {
+  const au = $('au'), t = PL.id && L.tracks.get(PL.id); if (!t || !$('pTog')) return;
+  $('pTog').onclick = () => au.paused ? au.play() : au.pause();
+  $('pBack').onclick = () => { au.currentTime = t.cue || 0; };
+  $('pX').onclick = () => { au.pause(); au.removeAttribute('src'); PL.id = null; renderPlayer(); };
+  $('pmeta').onclick = () => trackSheet(t.id);
+}
+['play', 'pause', 'ended'].forEach(ev => $('au').addEventListener(ev, () => { if ($('pTog')) $('pTog').textContent = $('au').paused ? '▶' : '❚❚'; }));
+$('au').addEventListener('timeupdate', () => { const au = $('au'), p = $('pprog'); if (p && au.duration) p.style.width = (au.currentTime / au.duration * 100) + '%'; });
+
+/* ---------------- uploads ---------------- */
+const UP = [];
+const upHTML = u => `<div class="up"><div class="meta"><div class="t1">${esc(u.name)}</div><div class="t2">${u.state}</div><div class="bar"><i style="width:${u.pct}%"></i></div></div></div>`;
+function uploadFiles(files, plId) {
+  files.forEach(f => UP.unshift({ f, name: f.name, pct: 0, state: 'Waiting…', pl: plId }));
+  render(); pumpUploads();
+}
+let upBusy = false;
+async function pumpUploads() {
+  if (upBusy) return; const u = UP.find(x => x.state === 'Waiting…'); if (!u) return; upBusy = true;
+  await new Promise(res => {
+    const x = new XMLHttpRequest();
+    x.open('POST', `/api/upload?name=${encodeURIComponent(u.name)}&playlist=${encodeURIComponent(u.pl || '')}`);
+    x.setRequestHeader('X-Mixbox-Token', TOKEN);
+    x.upload.onprogress = e => { if (e.lengthComputable) { u.pct = Math.round(e.loaded / e.total * 100); u.state = `Uploading ${u.pct}%`; const l = $('upList'); if (l) l.innerHTML = UP.map(upHTML).join(''); } };
+    x.onload = () => { u.pct = 100; u.state = x.status === 200 ? '✓ Added to desktop — analyzing' : '✕ ' + (JSON.parse(x.responseText || '{}').error || 'Failed'); res(); };
+    x.onerror = () => { u.state = '✕ Network error'; res(); };
+    x.send(u.f);
+  });
+  upBusy = false; if (S.tab === 'up') render(); pumpUploads();
+}
+
+/* ---------------- boot ---------------- */
+async function boot() {
+  if (!TOKEN) return renderPair();
+  const cached = ls.get('mixbox.cache', null);
+  if (cached) { L.ver = cached.ver; L.tracks = new Map(cached.tracks.map(t => [t.id, t])); L.order = cached.tracks.map(t => t.id); L.playlists = cached.playlists || []; L.history = cached.history || []; QUEUE.forEach(applyLocal); render(); }
+  try { await loadLibrary(); listen(); flush(); } catch (e) { if (TOKEN) { setOnline(false); render(); toast('Desktop not reachable — showing last sync'); setTimeout(boot, 5000); } }
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && TOKEN) { loadLibrary().catch(() => {}); listen(); flush(); } });
+boot();
+</script>
+</body>
+</html>

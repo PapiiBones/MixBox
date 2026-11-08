@@ -1,0 +1,38 @@
+{
+  "name": "mixbox-dj",
+  "productName": "Mixbox DJ",
+  "version": "1.0.0",
+  "description": "A rekordbox-style two-deck DJ application for macOS and Windows",
+  "main": "main.js",
+  "author": "Mixbox",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --publish never",
+    "dist:win": "electron-builder --win --publish never",
+    "dist:mac": "electron-builder --mac --publish never"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.mixbox.dj",
+    "productName": "Mixbox DJ",
+    "files": ["main.js", "preload.js", "app/**/*"],
+    "directories": { "output": "dist" },
+    "mac": {
+      "target": [{ "target": "dmg", "arch": ["universal"] }],
+      "category": "public.app-category.music",
+      "identity": null
+    },
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true },
+    "portable": { "artifactName": "MixboxDJ-Portable-${version}.exe" }
+  }
+}

@@ -1,0 +1,30 @@
+I’ve added controller support (including an XDJ-RR setup wizard) and the phone app; both are in the updated MixboxDJ.zip, and the README has setup steps. I tested the controller logic with simulated MIDI messages; nothing has been tried on real hardware or a phone yet.
+
+XDJ-RR: there’s no ready-made mapping. I couldn’t read Pioneer’s official XDJ-RR MIDI message list from here, and only parts of it came through. Rather than ship a guessed mapping, I built a setup wizard. It asks you to press or move each control on the unit in turn (decks, jogs, pads, mixer, effects, browse knob) and records exactly what your XDJ-RR sends. It takes about 3 minutes once and is saved.
+
+To set it up:
+
+On the XDJ-RR, set UTILITY → MIXER MODE → MIDI CONTROL, then press MIDI → LOAD.
+In the app, open MIDI → setup wizard and follow the prompts.
+Under Audio, pick the XDJ-RR as the output and tick “Headphones on outputs 3/4”. Each channel’s CUE button then plays in the XDJ-RR’s headphone jack.
+
+The controller support also includes:
+
+MIDI Learn: click any on-screen control, then move the hardware control to remap it.
+DDJ-400: one-click preset.
+Other controllers: any 2-deck MIDI controller works through the same wizard.
+LEDs on buttons and pads light to match the app, and faders use full 14-bit resolution.
+
+Phone app: the desktop app hosts it over your Wi-Fi. Click 📱 Phone → Start sync, open the address it shows on your phone, enter the PIN, and add it to your home screen. The phone and computer share one live library, so an edit on either shows up on the other right away. On the phone you can:
+
+Search and filter by BPM, compatible key, genre, rating or color.
+Preview tracks streamed from the computer, and set cue points and hot cues.
+Rate, color-code and edit tags.
+Drag to reorder playlists, or tap “Harmonic order” to sequence a set by key and BPM, with a key/BPM check between each pair of tracks.
+Upload tracks from the phone to the computer.
+
+The phone app only opens while the computer is running Mixbox with sync on and both are on the same Wi-Fi. If the connection drops while it’s open, your edits wait and send when it reconnects. Truly standalone use away from the computer would need a native iOS/Android app.
+
+Claude in Chrome needs “Allow network egress” turned on in Settings → Capabilities. With that on, I could read Pioneer’s PDF directly and ship a ready-made XDJ-RR preset alongside the wizard.
+
+The online preview is updated too, but MIDI and phone sync only work in the desktop app.
