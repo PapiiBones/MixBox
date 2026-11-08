@@ -1,4 +1,4 @@
-name: NodeJS with Webpack
+name: Mixbox DJ Build
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Use Node.js 20
+    - name: Set up Node.js 20
       uses: actions/setup-node@v4
       with:
         node-version: 20
@@ -36,7 +36,7 @@ jobs:
         const fs = require('node:fs');
         for (const file of ['app/index.html', 'app/mobile.html']) {
           const html = fs.readFileSync(file, 'utf8');
-          const scripts = [...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)];
+          const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
           if (!scripts.length) throw new Error(`No inline script found in ${file}`);
           for (const [, source] of scripts) new Function(source);
           console.log(`Syntax OK: ${file}`);
