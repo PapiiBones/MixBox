@@ -8,22 +8,63 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        include:
+          - os: windows-latest
+            target: win
+          - os: macos-latest
+            target: mac
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Use Node.js 20
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: 20
 
-    - name: Build
+    - name: Check JavaScript syntax
       working-directory: mixbox
+      shell: bash
       run: |
-        npm install
-        npm run dist
+        node --check main.js
+        node --check preload.js
+        node <<'NODE'
+        const fs = require('node:fs');
+        for (const file of ['app/index.html', 'app/mobile.html']) {
+          const html = fs.readFileSync(file, 'utf8');
+          const scripts = [...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)];
+          if (!scripts.length) throw new Error(`No inline script found in ${file}`);
+          for (const [, source] of scripts) new Function(source);
+          console.log(`Syntax OK: ${file}`);
+        }
+        NODE
+
+    - name: Install dependencies (retry transient download failures)
+      working-directory: mixbox
+      shell: bash
+      run: |
+        for attempt in 1 2 3; do
+          if npm install --no-audit --no-fund; then
+            exit 0
+          fi
+          if [ "$attempt" -lt 3 ]; then
+            echo "Install attempt $attempt failed; retrying in 15 seconds..."
+            sleep 15
+          fi
+        done
+        exit 1
+
+    - name: Build application
+      working-directory: mixbox
+      run: npm run dist:${{ matrix.target }}
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: mixbox-${{ matrix.target }}
+        path: mixbox/dist/*
+        if-no-files-found: error
